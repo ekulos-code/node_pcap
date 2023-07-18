@@ -30,8 +30,20 @@ DHCPv6.prototype.decode = function (raw_packet, offset) {
     this.messageType = raw_packet.readUInt8(offset); // 0
     this.messageTypeDecoded = messageTypes[this.messageType];
     this.transactionId = raw_packet.readUIntBE(1, 3);
-    this.options_raw = raw_packet.slice(4);
+    this.options_raw = parseOptions(raw_packet.slice(4), 0);
     return this;
 };
+
+function parseOptions(raw_packet, offset) {
+    const options = {};
+    let optionsIndex = offset;
+    while (optionsIndex < raw_packet.length-1) {
+        const currentOption = raw_packet.slice(optionsIndex).readUIntBE(0, 2);
+        const currentLength = raw_packet.slice(optionsIndex).slice(2, 4).readUInt16BE();
+        options[currentOption] = raw_packet.slice(optionsIndex + 4, optionsIndex + 4 + currentLength);
+        optionsIndex += currentLength + 4;
+    }
+    return options;
+}
 
 module.exports = DHCPv6;
